@@ -1,0 +1,39 @@
+pool:
+  vmImage: 'ubuntu-16.04'
+variables:
+  buildConfiguration: 'Release'
+  advice.detachedHead: false
+
+stages:
+
+stages:
+- stage: Build
+  jobs:
+  - job: BuildJob
+    steps:
+    - script: echo Building!
+- stage: Build
+  jobs:
+  - job: BuildJob
+    steps:
+    - script: echo Building!
+
+
+steps:
+- script: |
+    dotnet build --configuration $(buildConfiguration) --verbosity n 
+    dotnet publish $(Build.Repository.LocalPath) --output $BUILD_ARTIFACTSTAGINGDIRECTORY --configuration $(buildConfiguration) --verbosity n
+    dotnet pack /p:PackageVersion=$(Build.BuildNumber)
+#    dotnet nuget push **/*.nupkg
+#    dotnet nuget push *.nupkg --source https://pkgs.dev.azure.com/lcptfs/_packaging/LcpNuGet/nuget/v3/index.json --api-key gnhlk2wevhik7x4vf7cnzs27fzhybtttko2ilw5jbwtwtmanj7va 
+  displayName: Build and stage the publish
+- task: NuGetCommand@2
+  displayName: 'Push nuget'
+  inputs:
+    command: 'push'
+    feedsToUse: 'select'
+    packagesToPush: '$(Build.ArtifactStagingDirectory)/**/*.nupkg;!$(Build.ArtifactStagingDirectory)/**/*.symbols.nupkg'
+    nuGetFeedType: 'internal'
+    publishVstsFeed: 'LcpNuGet'
+    allowPackageConflicts: false
+    versioningScheme: 'off'
